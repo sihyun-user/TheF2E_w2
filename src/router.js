@@ -1,13 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import Home from './pages/Home.vue'
+import Bikeways from './pages/Bikeways.vue'
+import Bikes from './pages/Bikes.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/home' },
-    { path: '/home', component: Home },
-    { path: '/:notFound(.*)', redirect: '/home' }
+    { path: '/', redirect: '/bikes' },
+    { path: '/bikeways', component: Bikeways },
+    { path: '/bikes', component: Bikes },
+    { path: '/:notFound(.*)', redirect: '/bikes' }
   ]
 })
 
