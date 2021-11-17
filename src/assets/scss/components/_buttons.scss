@@ -39,6 +39,24 @@
     border: 1px solid $color-blue3;
     background-color: $color-blue2;
   }
+
+  &-red {
+    color: #CC1010;
+    border: 1px solid #CC1010;
+    background-color: #F4DCDC;
+  }
+
+  &-gray {
+    color: #7B7B7B;
+    border: 1px solid #7B7B7B;
+    background-color: #E5E5E5;
+  }
+
+  &-yellow {
+    color: #EB8F05;
+    border: 1px solid #EB8F05;
+    background-color: #F5E6D0;
+  }
 }
 
 .select {
@@ -71,12 +89,14 @@
 
   &__list {
     width: 152px;
+    height: 560px;
     background-color: $color-white;
     border: 1px solid $color-primary;
     border-radius: 4px;
     overflow: hidden;
     position: absolute;
     top: 47px;
+    overflow-y: scroll;
 
     &--title {
       color: $color-primary;

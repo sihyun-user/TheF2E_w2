@@ -60,6 +60,7 @@
     }
 
     &__btns {
+      display: flex;
 
       & button {
         width: 72px;
@@ -98,5 +99,13 @@
         font-size: 16px;
       }
     }
+  }
+
+  .notBikes {
+    font-size: 18px;
+    font-weight: $medium;
+    color: $color-secondary;
+    text-align: center;
+    margin-top: 20px;
   }
 }

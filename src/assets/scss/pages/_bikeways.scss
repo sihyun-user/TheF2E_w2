@@ -45,15 +45,13 @@
     }
 
     &__address {
-      margin-bottom: 15px;
-
       & i {
         font-size: 20px;
       }
     }
 
     &__target {
-      margin-bottom: 15px;
+      margin: 15px 0;
       display: flex;
       
       & > div {
@@ -61,7 +59,7 @@
         align-items: center;
 
         &:first-child {
-          margin-right: 100px;
+          width: 160px;
         }
       }
 
@@ -71,8 +69,8 @@
     }
 
     &__start{
-      margin-bottom: 15px;
-      
+      margin: 15px 0;
+
       & h2 {
         font-weight: $bold;
         display: inline-block;
@@ -125,5 +123,13 @@
         font-size: 16px;
       }
     }
+  }
+
+  .notnotBikeways {
+    font-size: 18px;
+    font-weight: $medium;
+    color: $color-secondary;
+    text-align: center;
+    margin-top: 20px;
   }
 }
