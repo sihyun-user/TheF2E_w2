@@ -10,7 +10,12 @@
         </div>
         <div v-else>
           <ul>
-            <li v-for="bikeway in bikeways" :key="bikeway.RouteName">
+            <li 
+            v-for="bikeway in pageBikeways" 
+            :key="bikeway.RouteName"
+            @click="selectedBikeway(bikeway.RouteName)"
+            :class="{ curBikeway:  bikeway.RouteName == bikewayName}"
+            >
               <h1 class="results__title">{{ bikeway.RouteName }}</h1>
               <div class="results__address">
                 <i class="fas fa-map-marker-alt"></i>
@@ -49,16 +54,16 @@
           <p class="notnotBikeways" v-if="!bikeways || bikeways.length == 0">這個城市沒有車道資料，請重新搜尋</p>
         </div>
       </div>
-      <div class="page">
-        <button>
+      <div class="page" v-if="pageBikeways">
+        <button @click="goto(-1)">
           <i class="fas fa-chevron-left"></i>
         </button>
         <div class="page__numbers">
-          <span>1</span>
+          <span>{{ curPage }}</span>
           <span> / </span>
-          <span>5</span>
+          <span>{{ numPages }}</span>
         </div>
-        <button>
+        <button @click="goto(1)">
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>
@@ -67,8 +72,8 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import { API_URL } from '../config.js'
+import { ref, watch } from 'vue'
+import { API_URL, RES_PER_PAGE } from '../config.js'
 import getAuthorizationHeader from '../helpers.js'
 import SearchFilter from '../compontets/SearchFilter.vue'
 export default {
@@ -77,8 +82,12 @@ export default {
   },
   setup() {
     const bikeways = ref(null)
+    const bikewayName = ref(null)
     const keyword = ref(null)
     const city = ref(null)
+    const curPage = ref(null)
+    const numPages = ref(null)
+    const pageBikeways = ref(null)
     const isSearch = ref(false)
     const isLoading = ref(false)
 
@@ -91,8 +100,10 @@ export default {
         await getBikeways()
         bikeways.value = bikeways.value.filter((item) => item.RouteName.indexOf(keyword.value) > -1)
       }else {
-        getBikeways()
+        await getBikeways()
       }
+
+      initPageResults()
     }
 
     function updatedFilters(val) {
@@ -103,8 +114,46 @@ export default {
     }
     /* 搜尋結束 */
 
+    /* 抓取頁數開始 */
+    function goto(val) {
+      curPage.value += val
+
+      if(curPage.value < 1) {
+        curPage.value = 1
+      }else if(curPage.value > numPages.value) {
+        curPage.value = numPages.value
+      }
+    }
+
+    function setPageResults(page) {
+      // page(1)抓取 0 - 7 的陣列項目 | page(2)抓取 8 - 15 的陣列項目
+      const start = (page - 1) * RES_PER_PAGE
+      const end = page * RES_PER_PAGE
+      pageBikeways.value = bikeways.value.slice(start, end)
+    }
+
+    function initPageResults() {
+      if(!bikeways.value) return
+
+      curPage.value = 1
+      numPages.value = Math.ceil(bikeways.value.length / RES_PER_PAGE)
+      setPageResults(1)
+    }
+
+    watch(curPage, ()=> setPageResults(curPage.value))
+    /* 抓取頁數結束 */
+
+    /* 選擇站點開始 */
+    function selectedBikeway(name) {
+      let bikeway = pageBikeways.value.find((bikeway) => bikeway.RouteName == name)
+      bikewayName.value = bikeway.RouteName
+    } 
+    /* 選擇站點結束 */
+
     /* 取得單車資料開始 */
     async function getBikeways() {
+      bikeways.value = null
+      pageBikeways.value = null
       isLoading.value = true
       try {
         const API = `${API_URL}/Cycling/Shape/${city.value}?$format=JSON`
@@ -121,7 +170,6 @@ export default {
         }
 
         bikeways.value = responseData
-        console.log(bikeways.value)
       } catch (e) {
         console.error(e)
       }
@@ -131,9 +179,15 @@ export default {
 
     return {
       bikeways,
+      bikewayName,
+      pageBikeways,
+      curPage,
+      numPages,
       isSearch,
       isLoading,
-      updatedFilters
+      updatedFilters,
+      goto,
+      selectedBikeway
     }
   }
 }

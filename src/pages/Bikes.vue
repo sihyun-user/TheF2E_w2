@@ -10,7 +10,12 @@
         </div>
         <div v-else>
           <ul>
-            <li v-for="bike in bikes" :key="bike.uid">
+            <li 
+            v-for="bike in pageBikes" 
+            :key="bike.uid"
+            @click="selectedBike(bike.uid)"
+            :class="{ curBike: bikeUID == bike.uid }"
+            >
               <h1 class="results__title">{{ bike.name }}</h1>
               <div class="results__address">
                 <i class="fas fa-map-marker-alt"></i>
@@ -35,16 +40,16 @@
           <p class="notBikes" v-if="!bikes || bikes.length == 0">這個城市沒有單車站點資料，請重新搜尋</p>
         </div>
       </div>
-      <div class="page">
-        <button>
+      <div class="page" v-if="pageBikes">
+        <button @click="goto(-1)">
           <i class="fas fa-chevron-left"></i>
         </button>
         <div class="page__numbers">
-          <span>1</span>
+          <span>{{ curPage }}</span>
           <span> / </span>
-          <span>5</span>
+          <span>{{ numPages }}</span>
         </div>
-        <button>
+        <button @click="goto(1)">
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>
@@ -53,8 +58,8 @@
 </template>
 
 <script>
-import { ref } from 'vue'
-import { API_URL } from '../config.js'
+import { ref, watch } from 'vue'
+import { API_URL, RES_PER_PAGE } from '../config.js'
 import getAuthorizationHeader from '../helpers.js'
 import SearchFilter from '../compontets/SearchFilter.vue'
 export default {
@@ -65,8 +70,12 @@ export default {
     const stations = ref(null)
     const availability = ref(null)
     const bikes = ref(null)
+    const bikeUID = ref(null)
     const keyword = ref(null)
-    const city = ref(null)
+    const city = ref(0)
+    const curPage = ref(null)
+    const numPages = ref(null)
+    const pageBikes = ref(null)
     const isSearch = ref(false)
     const isLoading = ref(false)
 
@@ -78,10 +87,11 @@ export default {
       if(keyword.value) {
         await getBikes()
         bikes.value = bikes.value.filter((item) => item.name.indexOf(keyword.value) > -1)
-        console.log(bikes.value)
       }else {
-        getBikes()
+        await getBikes()
       }
+
+      initPageResults()
     }
 
     function updatedFilters(val) {
@@ -91,6 +101,45 @@ export default {
       goSearch()
     }
     /* 搜尋結束 */
+
+
+    /* 抓取頁數開始 */
+    function goto(val) {
+      curPage.value += val
+
+      if(curPage.value < 1) {
+        curPage.value = 1
+      }else if(curPage.value > numPages.value) {
+        curPage.value = numPages.value
+      }
+    }
+
+    function setPageResults(page) {
+      // page(1)抓取 0 - 7 的陣列項目 | page(2)抓取 8 - 15 的陣列項目
+      const start = (page - 1) * RES_PER_PAGE
+      const end = page * RES_PER_PAGE
+      pageBikes.value = bikes.value.slice(start, end)
+    }
+
+    function initPageResults() {
+      if(!bikes.value) return
+
+      curPage.value = 1
+      numPages.value = Math.ceil(bikes.value.length / RES_PER_PAGE)
+      setPageResults(1)
+    }
+
+    watch(curPage, ()=> setPageResults(curPage.value))
+    /* 抓取頁數結束 */
+
+
+    /* 選擇站點開始 */
+    function selectedBike(uid) {
+      let bike = pageBikes.value.find((bike) => bike.uid == uid)
+      bikeUID.value = bike.uid
+    } 
+    /* 選擇站點結束 */
+
 
     /* 取得單車資料開始 */
     async function getStationsData() {
@@ -158,6 +207,7 @@ export default {
 
     async function getBikes() {
       bikes.value = null
+      pageBikes.value = null
       isLoading.value = true
       try {
         await getStationsData()
@@ -180,9 +230,15 @@ export default {
 
     return {
       bikes,
+      pageBikes,
+      curPage,
+      numPages,
+      bikeUID,
       isSearch,
       isLoading,
-      updatedFilters
+      updatedFilters,
+      goto,
+      selectedBike
     }
   }
 }
