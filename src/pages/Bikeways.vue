@@ -114,6 +114,7 @@ export default {
     }
     /* 搜尋結束 */
 
+
     /* 抓取頁數開始 */
     function goto(val) {
       curPage.value += val
@@ -143,12 +144,14 @@ export default {
     watch(curPage, ()=> setPageResults(curPage.value))
     /* 抓取頁數結束 */
 
+
     /* 選擇站點開始 */
     function selectedBikeway(name) {
       let bikeway = pageBikeways.value.find((bikeway) => bikeway.RouteName == name)
       bikewayName.value = bikeway.RouteName
     } 
     /* 選擇站點結束 */
+
 
     /* 取得單車資料開始 */
     async function getBikeways() {

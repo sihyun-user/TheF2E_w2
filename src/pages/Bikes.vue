@@ -14,7 +14,7 @@
             v-for="bike in pageBikes" 
             :key="bike.uid"
             @click="selectedBike(bike.uid)"
-            :class="{ curBike: bikeUID == bike.uid }"
+            :class="{ curBike: curBike == bike }"
             >
               <h1 class="results__title">{{ bike.name }}</h1>
               <div class="results__address">
@@ -22,7 +22,7 @@
                 <span v-if="bike.address">{{ bike.address }}</span>
                 <span v-else>沒有標示地址</span>
               </div>
-              <div class="results__btns">
+              <div class="results__tags">
                 <div class="results__status">
                   <button class="tag tag-blue" v-if="bike.status == '1'">正常營運</button>
                   <button class="tag tag-red" v-else-if="bike.status == '2'">暫停營運</button>
@@ -54,6 +54,7 @@
         </button>
       </div>
     </div>
+    <Map :bikes="pageBikes" :selected="curBike" :city="city"></Map>
   </section>
 </template>
 
@@ -62,15 +63,17 @@ import { ref, watch } from 'vue'
 import { API_URL, RES_PER_PAGE } from '../config.js'
 import getAuthorizationHeader from '../helpers.js'
 import SearchFilter from '../compontets/SearchFilter.vue'
+import Map from '../compontets/Map.vue'
 export default {
   components: {
-    SearchFilter
+    SearchFilter,
+    Map
   },
   setup() {
     const stations = ref(null)
     const availability = ref(null)
     const bikes = ref(null)
-    const bikeUID = ref(null)
+    const curBike = ref(null)
     const keyword = ref(null)
     const city = ref(0)
     const curPage = ref(null)
@@ -135,8 +138,7 @@ export default {
 
     /* 選擇站點開始 */
     function selectedBike(uid) {
-      let bike = pageBikes.value.find((bike) => bike.uid == uid)
-      bikeUID.value = bike.uid
+      curBike.value = pageBikes.value.find((bike) => bike.uid == uid)
     } 
     /* 選擇站點結束 */
 
@@ -162,10 +164,8 @@ export default {
           name: el.StationName.Zh_tw,
           uid: el.StationUID,
           address: el.StationAddress.Zh_tw,
-          position: { 
-            lat: el.StationPosition.PositionLat,
-            lng: el.StationPosition.PositionLon
-          }
+          lat: el.StationPosition.PositionLat,
+          lng: el.StationPosition.PositionLon
         }
 
         data.push(stationData)
@@ -220,6 +220,7 @@ export default {
         }
 
         bikes.value = bikesData
+        console.log(bikes.value)
       } catch (e) { 
         console.error(e)
       }
@@ -229,11 +230,12 @@ export default {
 
 
     return {
+      city,
       bikes,
       pageBikes,
       curPage,
       numPages,
-      bikeUID,
+      curBike,
       isSearch,
       isLoading,
       updatedFilters,

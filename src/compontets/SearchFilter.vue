@@ -78,7 +78,6 @@ export default {
         keyword: keyword.value,
         city: selectedCity.value,
       }
-
       celarKeyword()
       context.emit('update-filter', updatedFilter)
     }
