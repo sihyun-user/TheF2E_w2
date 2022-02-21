@@ -5,6 +5,11 @@
     background-color: $color-white;
     box-shadow: 3px 5px 10px 0px rgba(38, 38, 38, 0.25);
 
+    position: absolute;
+    left: 0;
+    top: 80px;
+    z-index: 2;
+
     &__block {
       width: 100%;
       height: 245px;

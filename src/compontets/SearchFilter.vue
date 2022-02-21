@@ -46,7 +46,7 @@ import { ref, computed, watch } from 'vue'
 import CITYDATA from '../city-data.js'
 export default {
   props: ['title'],
-  emits: ['update-filter'],
+  emits: ['update-filter', 'is-filter'],
   setup(_,context) {
     const cityData = CITYDATA
     const keyword = ref(null)
@@ -58,6 +58,7 @@ export default {
 
     function handleFilter() {
       isFilter.value = ! isFilter.value
+      context.emit('is-filter', isFilter.value)
     }
 
     function handleCities() {
@@ -78,6 +79,8 @@ export default {
         keyword: keyword.value,
         city: selectedCity.value,
       }
+
+      isOpen.value = false
       celarKeyword()
       context.emit('update-filter', updatedFilter)
     }

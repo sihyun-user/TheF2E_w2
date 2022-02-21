@@ -126,19 +126,23 @@
 .leaflet-popup .leaflet-popup-content-wrapper {
   background-color: $color-white;
   border-radius: 8px;
-  width: 350px;
-  min-height: 255px;
 }
 
 .leaflet-popup-tip-container {
   display: none;
 }
 
+.leaflet-popup-content {
+  margin: 0;
+}
+
 .mapPopup {
   font-size: 16px;
-
+  width: 350px;
+  min-height: 150px;
+  
   &__content {
-    width: 310px;
+    padding: 10px 20px;
   }
 
   &__title {
@@ -199,5 +203,87 @@
       font-weight: $bold;
       color: $color-secondary;
     }
+  }
+}
+
+.mapPopup2 {
+  font-size: 16px;
+  min-height: 150px;
+  width: 350px;
+  
+  &__content {
+    padding: 10px 20px;
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: $bold;
+    color: $color-secondary;
+    margin-bottom: 12px;
+  }
+
+  &__address {
+    & i {
+      font-size: 20px;
+      color: $color-primary;
+    }
+  }
+
+  &__target {
+    margin: 15px 0;
+    display: flex;
+    
+    & > div {
+      display: flex;
+      align-items: center;
+
+      &:first-child {
+        width: 160px;
+      }
+    }
+
+    & img {
+      width: 20px;
+    }
+  }
+
+  &__start{
+    margin: 15px 0;
+
+    & h2 {
+      font-weight: $bold;
+      color: $color-primary;
+      display: inline-block;
+    }
+  }
+
+  &__end {
+    & h2 {
+      font-weight: $bold;
+      color: $color-primary;
+      display: inline-block;
+    }
+  }
+
+  & span {
+    font-size: 14px;
+    font-weight: $regular;
+    color: $color-gray-1;
+    display: inline-block;
+    margin-left: 8px;
+  }
+}
+
+.mapPopup3 {
+  font-size: 16px;
+
+  &__content {
+    padding: 10px 20px;
+  }
+
+  &__title {
+    font-size: 20px;
+    font-weight: $bold;
+    color: $color-secondary;
   }
 }

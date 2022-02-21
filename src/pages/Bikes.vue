@@ -1,7 +1,7 @@
 <template>
   <section class="bikes">
-    <search-filter title="尋找單車" @update-filter="updatedFilters"></search-filter>
-    <div class="aside" v-if="isSearch">
+    <search-filter title="尋找單車" @update-filter="updatedFilters" @is-filter="showFilter"></search-filter>
+    <div class="aside" v-if="isSearch && isFilter">
       <div class="aside__block"></div>
       <div class="aside__wrap"></div>
       <div class="results">
@@ -54,14 +54,14 @@
         </button>
       </div>
     </div>
-    <Map :bikes="pageBikes" :selected="curBike" :city="city"></Map>
+    <Map :bikes="bikes" :selected="curBike" :show-cur-bike="showCurBike"></Map>
   </section>
 </template>
 
 <script>
 import { ref, watch } from 'vue'
-import { API_URL, RES_PER_PAGE } from '../config.js'
-import getAuthorizationHeader from '../helpers.js'
+import { useStore } from 'vuex'
+import { RES_PER_PAGE } from '../config.js'
 import SearchFilter from '../compontets/SearchFilter.vue'
 import Map from '../compontets/Map.vue'
 export default {
@@ -70,6 +70,7 @@ export default {
     Map
   },
   setup() {
+    const store = useStore()
     const stations = ref(null)
     const availability = ref(null)
     const bikes = ref(null)
@@ -81,6 +82,14 @@ export default {
     const pageBikes = ref(null)
     const isSearch = ref(false)
     const isLoading = ref(false)
+    const isFilter = ref(false)
+    const showCurBike = ref(0)
+
+    /* 展開搜尋吧開始 */
+    function showFilter(val) {
+      isFilter.value = val
+    }
+    /* 展開搜尋吧結束 */
 
 
     /* 搜尋開始 */
@@ -139,79 +148,23 @@ export default {
     /* 選擇站點開始 */
     function selectedBike(uid) {
       curBike.value = pageBikes.value.find((bike) => bike.uid == uid)
+      showCurBike.value++
     } 
     /* 選擇站點結束 */
-
+    
 
     /* 取得單車資料開始 */
-    async function getStationsData() {
-      const API = `${API_URL}/Bike/Station/${city.value}?$format=JSON`
-
-      const response = await fetch(API, {
-        headers: getAuthorizationHeader()
-      })
-
-      const responseData = await response.json()
-
-      if(!response.ok) {
-        const error = new Error(responseData.message || '取得單車站點資料失敗')
-        throw error
-      }
-
-      let data = []
-      responseData.forEach(el => {
-        const stationData = {
-          name: el.StationName.Zh_tw,
-          uid: el.StationUID,
-          address: el.StationAddress.Zh_tw,
-          lat: el.StationPosition.PositionLat,
-          lng: el.StationPosition.PositionLon
-        }
-
-        data.push(stationData)
-      })
-
-      stations.value = data
-    }
-
-    async function getAvailabilityData() {
-      const API = `${API_URL}/Bike/Availability/${city.value}?$format=JSON` 
-
-      const response = await fetch(API, {
-        headers: getAuthorizationHeader()
-      })
-
-      const responseData = await response.json()
-
-      if(!response.ok) {
-        const error = new Error(responseData.message || '取得單車站點即時資料失敗')
-        throw error
-      }
-
-
-      let data = []
-      responseData.forEach(el => {
-        const availabilityData = {
-          uid: el.StationUID,
-          status: el.ServiceStatus,
-          rent: el.AvailableRentBikes,
-          return: el.AvailableReturnBikes,
-          updateTime: el.UpdateTime
-        }
-
-        data.push(availabilityData)
-      })
-
-      availability.value = data
-    }
-
     async function getBikes() {
       bikes.value = null
       pageBikes.value = null
       isLoading.value = true
       try {
-        await getStationsData()
-        await getAvailabilityData()
+        await store.dispatch('getStationsData', city.value).then((res) => {
+          stations.value = res
+        })
+        await store.dispatch('getAvailabilityData', city.value).then((res) => {
+          availability.value = res
+        })
 
         let bikesData = []
         for(let item of stations.value)  {
@@ -220,7 +173,6 @@ export default {
         }
 
         bikes.value = bikesData
-        console.log(bikes.value)
       } catch (e) { 
         console.error(e)
       }
@@ -240,7 +192,10 @@ export default {
       isLoading,
       updatedFilters,
       goto,
-      selectedBike
+      selectedBike,
+      showFilter,
+      isFilter,
+      showCurBike
     }
   }
 }

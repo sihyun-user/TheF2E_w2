@@ -14,7 +14,7 @@
             v-for="bikeway in pageBikeways" 
             :key="bikeway.RouteName"
             @click="selectedBikeway(bikeway.RouteName)"
-            :class="{ curBikeway:  bikeway.RouteName == bikewayName}"
+            :class="{ curBikeway: curBikeway && bikeway.RouteName == curBikeway.RouteName}"
             >
               <h1 class="results__title">{{ bikeway.RouteName }}</h1>
               <div class="results__address">
@@ -68,21 +68,25 @@
         </button>
       </div>
     </div>
+    <bikeway-map :bikeways="bikeways" :selected="curBikeway" :show-curbikeway="showCurBikeway" :city="city"></bikeway-map>
   </section>
 </template>
 
 <script>
 import { ref, watch } from 'vue'
-import { API_URL, RES_PER_PAGE } from '../config.js'
-import getAuthorizationHeader from '../helpers.js'
+import { useStore } from 'vuex'
+import { RES_PER_PAGE } from '../config.js'
 import SearchFilter from '../compontets/SearchFilter.vue'
+import BikewayMap from '../compontets/BikewayMap.vue'
 export default {
   components: {
-    SearchFilter
+    SearchFilter,
+    BikewayMap
   },
   setup() {
+    const store = useStore()
     const bikeways = ref(null)
-    const bikewayName = ref(null)
+    const curBikeway = ref(null)
     const keyword = ref(null)
     const city = ref(null)
     const curPage = ref(null)
@@ -90,6 +94,7 @@ export default {
     const pageBikeways = ref(null)
     const isSearch = ref(false)
     const isLoading = ref(false)
+    const showCurBikeway = ref(0)
 
 
     /* 搜尋開始 */
@@ -147,42 +152,36 @@ export default {
 
     /* 選擇站點開始 */
     function selectedBikeway(name) {
-      let bikeway = pageBikeways.value.find((bikeway) => bikeway.RouteName == name)
-      bikewayName.value = bikeway.RouteName
+      curBikeway.value = bikeways.value.find((item) => item.RouteName == name)
+      showCurBikeway.value++
     } 
     /* 選擇站點結束 */
 
 
-    /* 取得單車資料開始 */
+    /* 取得車道資料開始 */
     async function getBikeways() {
       bikeways.value = null
       pageBikeways.value = null
       isLoading.value = true
       try {
-        const API = `${API_URL}/Cycling/Shape/${city.value}?$format=JSON`
-
-        const response = await fetch(API, {
-          headers: getAuthorizationHeader()
+        await store.dispatch('getBikeways', city.value).then((res) => {
+          let data = [] 
+          for (let i = 0; i < res.length; i++) {
+            if(i != 71) data.push(res[i])
+          }
+          bikeways.value = data
         })
-
-        const responseData = await response.json()
-
-        if(!response.ok) {
-          const error = new Error(responseData.message || '取得車道資料失敗')
-          throw error
-        }
-
-        bikeways.value = responseData
       } catch (e) {
-        console.error(e)
+        console.log(e)
       }
       isLoading.value = false
     }
-    /* 取得單車資料結束 */
+    /* 取得車道資料結束 */
+
 
     return {
       bikeways,
-      bikewayName,
+      curBikeway,
       pageBikeways,
       curPage,
       numPages,
@@ -190,7 +189,9 @@ export default {
       isLoading,
       updatedFilters,
       goto,
-      selectedBikeway
+      selectedBikeway,
+      showCurBikeway,
+      city
     }
   }
 }

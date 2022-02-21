@@ -1,6 +1,6 @@
 <template>
   <div id="map" ref="divRef"></div>
-  <div class="mapPopup" ref="divPopupRef" >
+  <div ref="divPopupRef">
     <div class="mapPopup__content" v-if="markBike">
       <h1 class="mapPopup__title">{{ markBike.name }}</h1>
       <div class="mapPopup__address">
@@ -40,22 +40,20 @@
 </template>
 
 <script>
-import { ref, toRefs, onMounted, watch, computed } from 'vue'
-import CITYDATA from '../city-data.js'
+import { ref, toRefs, watch, computed, onMounted } from 'vue'
 export default {
-  props: ['bikes', 'selected' ,'city'],
+  props: ['bikes', 'selected', 'showCurBike'],
   setup(props) {
     const L = window.L
-    const { bikes, selected ,city } = toRefs(props)
+    const { bikes, selected, showCurBike } = toRefs(props)
     const divRef = ref(null)
     const divPopupRef = ref(null)
     const map = ref(null)
     const markIcon = ref(null)
     const markIcon2 = ref(null)
-    const center = ref(null)
     const markers = ref(null)
     const markBike = ref(null)
-    const coords = []
+    const coords = ref([])
 
     const updateTime = computed(() => {
       let date = new Date(markBike.value.updateTime)
@@ -69,15 +67,9 @@ export default {
 
       return date
     })
-    
-    function setCenter() {
-      let data = CITYDATA.find((item) => item.id == city.value)
-      center.value = data.center
-    }
 
     function initMap() {
-      const corred = center.value ? center.value : [24.91571, 121.6739]
-      map.value = L.map('map', { zoomAnimation:false }).setView(corred, 16)
+      map.value = L.map('map', { zoomAnimation:false }).setView([23.975, 120.973], 8)
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -94,52 +86,67 @@ export default {
         iconUrl: require('../assets/img/L-bike2.png'),
         iconSize: [48, 48],
         iconAnchor: [2, 2],
-        popupAnchor: [12, -40],
+        popupAnchor: [24, 1],
       })
     }
 
     function setMarker() {
-      markers.value = new L.MarkerClusterGroup().addTo(map.value)
+      markers.value = new L.MarkerClusterGroup({
+        spiderfyOnMaxZoom: true,
+        disableClusteringAtZoom: 18,
+      })
+
+      coords.value = []
 
       for(let i = 0; i < bikes.value.length; i++) {
         let iconStyle = bikes.value[i].rent > 0 ?  markIcon.value: markIcon2.value
 
-        //todo 點擊站點觸發彈窗
+        let coord = {
+          position: L.marker(bikes.value[i].latlng, { icon: iconStyle }),
+          bike: bikes.value[i]
+        }
+
         markers.value.addLayer(
-          L.marker([bikes.value[i].lat, bikes.value[i].lng], { icon: iconStyle })
-          .on('click', function (event) {
+          coord.position
+          .on('click', function () {
             markBike.value = bikes.value[i]
-            console.log(L.marker(event.latlng))
           })
-          .addTo(map.value)
           .bindPopup(
             L.popup({
+              maxWidth: 350,
               className: 'mapPopup'
             })
           )
           .setPopupContent(divPopupRef.value)
         )
 
-        let coord = L.marker([bikes.value[i].lat, bikes.value[i].lng], { icon: iconStyle })
-        coords.push(coord)
+        coords.value.push(coord)
       }
+
       map.value.addLayer(markers.value)
     }
 
-    function moveToMarker() {
-      // map.value.setView([selected.value.lat, selected.value.lng], 18)
-      console.log(coords[0])
-      coords[0].openPopup()
+    function getSelectedPopup() {
+      markBike.value = selected.value
+      const coord = coords.value.find((item) => selected.value.uid == item.bike.uid).position
+      coord.openPopup()
     }
 
-    watch(selected, ()=> {
-      moveToMarker()
-    })
+    function moveToMarker() {
+      map.value.setView(selected.value.latlng, 18)
+    }
+
+    watch(showCurBike, ()=> getSelectedPopup())
+    watch(selected, ()=> moveToMarker())
 
     watch(bikes, ()=> {
+      if(markers.value) {
+        map.value.removeLayer(markers.value)
+      }
+
       if(bikes.value) {
         setMarker()
-        setCenter()
+        map.value.setView([23.975, 120.973], 8)
       }
     })
     
@@ -158,9 +165,8 @@ export default {
 <style>
 #map {
   width: 100%;
-  margin: auto;
   height: calc(100vh - 80px);
   position: relative;
   z-index: 1;
-} 
+}
 </style>
